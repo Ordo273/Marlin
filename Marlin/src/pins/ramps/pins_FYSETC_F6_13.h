@@ -25,7 +25,7 @@
 // FYSETC F6 1.3 (and 1.4) pin assignments
 //
 
-#ifndef __AVR_ATmega2560__
+#if NOT_TARGET(__AVR_ATmega2560__)
   #error "Oops! Select 'FYSETC F6' in 'Tools > Board.'"
 #endif
 
@@ -221,9 +221,7 @@
   #define DOGLCD_A0                           16
   #define DOGLCD_CS                           17
 
-  #if ENABLED(FYSETC_GENERIC_12864_1_1)
-    #define LCD_BACKLIGHT_PIN                 27
-  #endif
+  #elif HAS_MARLINUI_U8GLIB || HAS_MARLINUI_HD44780
 
   #define KILL_PIN                            41
   #define LCD_RESET_PIN                       23  // Must be high or open for LCD to operate normally.
@@ -243,18 +241,10 @@
     #define NEOPIXEL_PIN                      25
   #endif
 
-#elif HAS_GRAPHICAL_LCD
-
-  #define LCD_PINS_RS                         16
-  #define LCD_PINS_ENABLE                     17
-  #define LCD_PINS_D4                         23
-  #define LCD_PINS_D5                         25
-  #define LCD_PINS_D6                         27
-  #define LCD_PINS_D7                         29
-
-  #if ENABLED(MKS_MINI_12864)
-    #define DOGLCD_CS                         25
-    #define DOGLCD_A0                         27
+  #if IS_NEWPANEL
+    #define BTN_EN1                           31
+    #define BTN_EN2                           33
+    #define BTN_ENC                           35
   #endif
 
 #endif
