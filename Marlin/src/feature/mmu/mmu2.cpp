@@ -881,10 +881,13 @@ void MMU2::filament_runout() {
     const int steps = (MMU2_CAN_LOAD_RETRACT) / (MMU2_CAN_LOAD_INCREMENT);
     DEBUG_ECHOLNPGM("MMU can_load:");
     LOOP_L_N(i, steps) {
-      execute_extruder_sequence((const E_Step *)can_load_increment_sequence, COUNT(can_load_increment_sequence));
       check_filament(); // Don't trust the idle function
-      DEBUG_CHAR(mmu2s_triggered ? 'O' : 'o');
+      DEBUG_CHAR(mmu2s_triggered ? 'X' : 'O');
+      DEBUG_CHAR(' ');
+      DEBUG_CHAR('-');
+      DEBUG_CHAR(' ');
       if (mmu2s_triggered) ++filament_detected_count;
+      execute_extruder_sequence((const E_Step *)can_load_increment_sequence, COUNT(can_load_increment_sequence));
     }
 
     if (filament_detected_count <= steps - (MMU2_CAN_LOAD_DEVIATION) / (MMU2_CAN_LOAD_INCREMENT)) {
