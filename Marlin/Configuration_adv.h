@@ -4107,11 +4107,11 @@
     // This is for Průša MK3-style extruders. Customize for your hardware.
     #define MMU2_FILAMENTCHANGE_EJECT_FEED 80.0
     #define MMU2_LOAD_TO_NOZZLE_SEQUENCE \
-      {  7.2, 1145 }, \
-      { 14.4,  871 }, \
-      { 36.0, 1393 }, \
-      { 14.4,  871 }, \
-      { 50.0,  198 }
+      {  3.6, 1145 }, \
+      {  6.4,  871 }, \
+      { 25.0, 1393 }, \
+      {   10,  871 }, \
+      {   10,  198 }
 
     #define MMU2_RAMMING_SEQUENCE \
       {   1.0, 1000 }, \
@@ -4124,7 +4124,7 @@
       {  -6.0,  600 }, \
       {  10.0,  700 }, \
       { -10.0,  400 }, \
-      { -50.0, 2000 }
+      { -90.0, 2000 }
   #endif
 
   /**
@@ -4135,14 +4135,14 @@
   #if HAS_PRUSA_MMU2S
     #define MMU2_C0_RETRY   5             // Number of retries (total time = timeout*retries)
 
-    #define MMU2_CAN_LOAD_FEEDRATE 800    // (mm/min)
+    #define MMU2_CAN_LOAD_FEEDRATE 1000    // (mm/min)
     #define MMU2_CAN_LOAD_SEQUENCE \
       {  0.1, MMU2_CAN_LOAD_FEEDRATE }, \
-      {  120.0, MMU2_CAN_LOAD_FEEDRATE }, \
-      { -40.0, MMU2_CAN_LOAD_FEEDRATE }
+      {  105, MMU2_CAN_LOAD_FEEDRATE }, \
+      {  -50, MMU2_CAN_LOAD_FEEDRATE }
 
-    #define MMU2_CAN_LOAD_RETRACT   6.0   // (mm) Keep under the distance between Load Sequence values
-    #define MMU2_CAN_LOAD_DEVIATION 0.8   // (mm) Acceptable deviation
+    #define MMU2_CAN_LOAD_RETRACT   2.0   // (mm) Keep under the distance between Load Sequence values
+    #define MMU2_CAN_LOAD_DEVIATION 0.4   // (mm) Acceptable deviation
 
     #define MMU2_CAN_LOAD_INCREMENT 0.2   // (mm) To reuse within MMU2 module
     #define MMU2_CAN_LOAD_INCREMENT_SEQUENCE \
