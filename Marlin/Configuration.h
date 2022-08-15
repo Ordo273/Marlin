@@ -1450,7 +1450,7 @@
  *     |    [-]    |
  *     O-- FRONT --+
  */
-#define NOZZLE_TO_PROBE_OFFSET {-54.54,-13.5,-2.6} //Z_old+Babystep = z_new
+#define NOZZLE_TO_PROBE_OFFSET {-35.2,3.1,-0.2} //Z_old+Babystep = z_new
 
 // Most probes should stay away from the edges of the bed, but
 // with NOZZLE_AS_PROBE this can be negative for a wider probing area.
