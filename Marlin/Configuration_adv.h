@@ -4138,7 +4138,7 @@
     #define MMU2_CAN_LOAD_FEEDRATE 1000    // (mm/min)
     #define MMU2_CAN_LOAD_SEQUENCE \
       {  0.1, MMU2_CAN_LOAD_FEEDRATE }, \
-      {  105, MMU2_CAN_LOAD_FEEDRATE }, \
+      {  100, MMU2_CAN_LOAD_FEEDRATE }, \
       {  -50, MMU2_CAN_LOAD_FEEDRATE }
 
     #define MMU2_CAN_LOAD_RETRACT   2.0   // (mm) Keep under the distance between Load Sequence values
