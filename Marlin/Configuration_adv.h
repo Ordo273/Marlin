@@ -4205,22 +4205,42 @@
     #define MMU2_LOAD_TO_NOZZLE_SEQUENCE \
       {  3.6, 1145 }, \
       {  6.4,  871 }, \
-      { 25.0, 1393 }, \
-      {   10,  871 }, \
-      {   10,  198 }
+      { 53.0, 1393 }, \
+      {   15,  871 }, \
+      {   13,  198 }
 
     #define MMU2_RAMMING_SEQUENCE \
-      {   1.0, 1000 }, \
-      {   1.0, 1500 }, \
-      {   2.0, 2000 }, \
-      {   1.5, 3000 }, \
-      {   2.5, 4000 }, \
-      { -15.0, 5000 }, \
-      { -14.0, 1200 }, \
-      {  -6.0,  600 }, \
-      {  10.0,  700 }, \
-      { -10.0,  400 }, \
-      { -90.0, 2000 }
+      {  0.90, 2300 }, \
+      {  0.49, 2519 }, \
+      {  0.5,  2700 }, \
+      {  0.64, 3335 }, \
+      {  0.81, 3500 }, \
+      {  0.72, 3760 }, \
+      {  0.85, 4299 }, \
+      {  1.00, 5090 }, \
+      {  1.10, 5715 }, \
+      {  1.10, 6341 }, \
+      {-15.00, 8400 }, \
+      { -7.70, 5400 }, \
+      { -2.20, 2700 }, \
+      { -1.10, 1620 }, \
+      {  6.00, 3000 }, \
+      { -6.00, 2700 }, \
+      {  6.00, 3000 }, \
+      { -6.00, 2700 }, \
+      {  6.00, 3000 }, \
+      { -6.00, 2700 }, \
+      {  6.00, 3000 }, \
+      { -6.00, 2625 }, \
+      {  6.00, 3000 }, \
+      { -6.00, 2500 }, \
+      { 10.50, 1500 }, \
+      {-10.50, 5400 }, \
+      { 10.50, 1500 }, \
+      {-10.50, 5400 }, \
+      { 10.50, 1500 }, \
+      {-10.50, 5400 }, \
+      {-120.0, 2000 }
   #endif
 
   /**
@@ -4235,14 +4255,36 @@
 
     #define MMU2_CAN_LOAD_FEEDRATE 1000    // (mm/min)
     #define MMU2_CAN_LOAD_SEQUENCE \
-      {  0.1, MMU2_CAN_LOAD_FEEDRATE }, \
-      {  100, MMU2_CAN_LOAD_FEEDRATE }, \
-      {  -50, MMU2_CAN_LOAD_FEEDRATE }
+      {  0.1, MMU2_CAN_LOAD_FEEDRATE/2 }, \
+      {  108, MMU2_CAN_LOAD_FEEDRATE }, \
+      {-15.00, 8400 }, \
+      { -7.70, 5400 }, \
+      { -2.20, 2700 }, \
+      { -1.10, 1620 }, \
+      {  6.00, 3000 }, \
+      { -6.00, 2700 }, \
+      {  6.00, 3000 }, \
+      { -6.00, 2700 }, \
+      {  6.00, 3000 }, \
+      { -6.00, 2700 }, \
+      {  6.00, 3000 }, \
+      { -6.00, 2625 }, \
+      {  6.00, 3000 }, \
+      { -6.00, 2500 }, \
+      {  6.00, 3000 }, \
+      {-10.50, 5400 }, \
+      { 10.50, 1500 }, \
+      {-10.50, 5400 }, \
+      { 10.50, 1500 }, \
+      {-10.50, 5400 }, \
+      { 10.50, 1500 }, \
+      {  -78, MMU2_CAN_LOAD_FEEDRATE }
 
-    #define MMU2_CAN_LOAD_RETRACT   2.0   // (mm) Keep under the distance between Load Sequence values
-    #define MMU2_CAN_LOAD_DEVIATION 0.4   // (mm) Acceptable deviation
+  //designed to check if fillament can pass heat coupling, so freaking use it like that!
+    #define MMU2_CAN_LOAD_RETRACT  10.0   // (mm) Keep under the distance between Load Sequence values
+    #define MMU2_CAN_LOAD_DEVIATION 3.0   // (mm) Acceptable deviation
 
-    #define MMU2_CAN_LOAD_INCREMENT 0.2   // (mm) To reuse within MMU2 module
+    #define MMU2_CAN_LOAD_INCREMENT 0.5   // (mm) To reuse within MMU2 module
     #define MMU2_CAN_LOAD_INCREMENT_SEQUENCE \
       { -MMU2_CAN_LOAD_INCREMENT, MMU2_CAN_LOAD_FEEDRATE }
 
