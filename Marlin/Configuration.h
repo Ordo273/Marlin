@@ -613,12 +613,12 @@
 // Above this temperature the heater will be switched off.
 // This can protect components from overheating, but NOT from shorts and failures.
 // (Use MINTEMP for thermistor short/failure protection.)
-#define HEATER_0_MAXTEMP 275
-#define HEATER_1_MAXTEMP 275
-#define HEATER_2_MAXTEMP 275
-#define HEATER_3_MAXTEMP 275
-#define HEATER_4_MAXTEMP 275
-#define HEATER_5_MAXTEMP 275
+#define HEATER_0_MAXTEMP 350
+#define HEATER_1_MAXTEMP 350
+#define HEATER_2_MAXTEMP 350
+#define HEATER_3_MAXTEMP 350
+#define HEATER_4_MAXTEMP 350
+#define HEATER_5_MAXTEMP 350
 #define HEATER_6_MAXTEMP 275
 #define HEATER_7_MAXTEMP 275
 #define BED_MAXTEMP      125
@@ -661,9 +661,12 @@
     #define DEFAULT_Ki_LIST {   1.93,   1.93 }
     #define DEFAULT_Kd_LIST { 73.64, 73.64 }
   #else
-    #define DEFAULT_Kp  22.35
-    #define DEFAULT_Ki   1.5
-    #define DEFAULT_Kd 83.32
+    #define DEFAULT_Kp 25.75
+    #define DEFAULT_Ki 2.38
+    #define DEFAULT_Kd 69.51
+    //#define DEFAULT_Kp  22.78
+    //#define DEFAULT_Ki   1.89
+    //#define DEFAULT_Kd  68.80
   #endif
 #endif
 
@@ -1479,7 +1482,7 @@
  *     |    [-]    |
  *     O-- FRONT --+
  */
-#define NOZZLE_TO_PROBE_OFFSET {-35.2,3.1,-0.15} //Z_old+Babystep = z_new
+#define NOZZLE_TO_PROBE_OFFSET {-35.2,3.1,-2.05} //Z_old+Babystep = z_new
 
 // Most probes should stay away from the edges of the bed, but
 // with NOZZLE_AS_PROBE this can be negative for a wider probing area.

@@ -102,14 +102,28 @@ void action_mmu2_reset() {
   ui.reset_status();
 }
 
+void menu_mmu2_information() {
+  if (ui.use_click()) return ui.go_back();
+  START_SCREEN();
+  STATIC_ITEM(MSG_MMU2_VERSION, SS_DEFAULT|SS_INVERT);
+  char numberstring[10];
+  sprintf(numberstring, "%d", mmu2.version);
+  STATIC_ITEM_F(F(numberstring));
+  sprintf(numberstring, "%d", mmu2.buildnr);
+  STATIC_ITEM_F(F(numberstring));
+  END_SCREEN();
+}
+
 void menu_mmu2() {
+  const bool busy = printingIsActive();
   START_MENU();
   BACK_ITEM(MSG_MAIN);
   SUBMENU(MSG_MMU2_LOAD_FILAMENT, menu_mmu2_load_filament);
-  SUBMENU(MSG_MMU2_LOAD_TO_NOZZLE, menu_mmu2_load_to_nozzle);
+  if (!busy) SUBMENU(MSG_MMU2_LOAD_TO_NOZZLE, menu_mmu2_load_to_nozzle);
   SUBMENU(MSG_MMU2_EJECT_FILAMENT, menu_mmu2_eject_filament);
   ACTION_ITEM(MSG_MMU2_UNLOAD_FILAMENT, action_mmu2_unload_filament);
   ACTION_ITEM(MSG_MMU2_RESET, action_mmu2_reset);
+  SUBMENU(MSG_MMU2_Information, menu_mmu2_information);
   END_MENU();
 }
 

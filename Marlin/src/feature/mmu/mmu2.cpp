@@ -69,6 +69,10 @@ MMU2 mmu2;
 #define MMU_CMD_E0   0x50  // up to supported filaments
 #define MMU_CMD_R0   0x60
 #define MMU_CMD_F0   0x70  // up to supported filaments
+#if defined(MMU2S_HAS_BLADE)
+#define MMU_CMD_K0   0x80  // up to supported filaments
+#endif
+#define MMU_CMD_W0   0x90   
 
 #define MMU_REQUIRED_FW_BUILDNR TERN(MMU2_MODE_12V, 132, 126)
 
@@ -280,6 +284,21 @@ void MMU2::mmu_loop() {
           tx_printf(F("F%d %d\n"), filament, cmd_arg);
           state = 3; // wait for response
         }
+#if defined(MMU2S_HAS_BLADE)
+        else if (WITHIN(cmd, MMU_CMD_K0, MMU_CMD_K0 + EXTRUDERS - 1)) {
+          // cut filament
+          const int filament = cmd - MMU_CMD_K0;
+          DEBUG_ECHOLNPGM("MMU <= K", filament, " ", cmd_arg);
+          tx_printf(F("K%d %d\n"), filament, cmd_arg);
+          state = 3; // wait for response
+        }
+#endif
+        else if (cmd == MMU_CMD_W0) {
+          // signal Load failure on MMU
+          DEBUG_ECHOLNPGM("MMU <= 'W0'");
+          MMU2_COMMAND("W0");
+          state = 4; // wait for response
+        }
 
         last_cmd = cmd;
         cmd = MMU_CMD_NONE;
@@ -328,8 +347,6 @@ void MMU2::mmu_loop() {
           if (keep_trying) {
             // MMU ok received but filament sensor not triggered, retrying...
             DEBUG_ECHOLNPGM("MMU => 'ok' (filament not present in gears)");
-            DEBUG_ECHOLNPGM("MMU <= 'C0' (keep trying)");
-            MMU2_COMMAND("C0");
           }
         #else
           constexpr bool keep_trying = false;
@@ -337,10 +354,10 @@ void MMU2::mmu_loop() {
 
         if (!keep_trying) {
           DEBUG_ECHOLNPGM("MMU => 'ok'");
-          ready = true;
-          state = 1;
-          last_cmd = MMU_CMD_NONE;
         }
+        ready = true;
+        state = 1;
+        last_cmd = MMU_CMD_NONE;
       }
       else if (ELAPSED(millis(), prev_request + MMU_CMD_TIMEOUT)) {
         // resend request after timeout
@@ -353,6 +370,19 @@ void MMU2::mmu_loop() {
       }
       TERN_(HAS_PRUSA_MMU2S, check_filament());
       break;
+	case 4:
+        if (rx_ok()) {
+          DEBUG_ECHOLNPGM("MMU => 'ok', resume print");
+          //mmu_attempt_nr = 0;
+          last_cmd = MMU_CMD_NONE;
+          ready = true;
+          state = 1;
+          resume_print();
+        }
+        if (cmd != MMU_CMD_NONE) {
+          state = 1;
+        }
+	    return;    
   }
 }
 
@@ -468,17 +498,42 @@ static void mmu2_not_responding() {
 
 #if HAS_PRUSA_MMU2S
 
-  bool MMU2::load_to_gears() {
+  bool MMU2::load_to_gears(const uint8_t index) {
+    bool success = false;
+
     command(MMU_CMD_C0);
     manage_response(true, true);
-    LOOP_L_N(i, MMU2_C0_RETRY) {  // Keep loading until filament reaches gears
-      if (mmu2s_triggered) break;
-      command(MMU_CMD_C0);
-      manage_response(true, true);
-      check_filament();
+#if defined(MMU2S_HAS_BLADE)
+    LOOP_L_N(j,MMU2S_K0_RETRY) {
+      if(j>0) {
+        unload();
+        command(MMU_CMD_K0 + index);
+        manage_response(true, true);
+
+        command(MMU_CMD_T0 + index);
+        manage_response(true, true);
+        
+      }
+#endif
+      LOOP_L_N(i, MMU2_C0_RETRY) {  // Keep loading until filament reaches gears
+        if (mmu2s_triggered) break;
+        DEBUG_ECHO_MSG("keep trying retry #", i+1);
+        command(MMU_CMD_C0);
+        manage_response(true, true);
+        check_filament();
+      }
+      success = mmu2s_triggered && can_load();
+      if (success) break;
+#if defined(MMU2S_HAS_BLADE)
     }
-    const bool success = mmu2s_triggered && can_load();
-    if (!success) mmu2_not_responding();
+#endif
+    if (!success) {
+      ui.set_status("Failed to load Fillament", true);
+      unload();
+      command(MMU_CMD_W0);
+      manage_response(true, true);
+      tool_change(index);
+    }
     return success;
   }
 
@@ -493,13 +548,21 @@ static void mmu2_not_responding() {
 
     if (index != extruder) {
 
+/*
+**
+**
+**"Sanity" Check if IR sensor is triggered dumbass!!!!
+**
+**
+*/
+
       stepper.disable_extruder();
       ui.status_printf(0, GET_TEXT_F(MSG_MMU2_LOADING_FILAMENT), int(index + 1));
 
       command(MMU_CMD_T0 + index);
       manage_response(true, true);
 
-      if (load_to_gears()) {
+      if (load_to_gears(index)) {
         extruder = index; // filament change is finished
         active_extruder = 0;
         stepper.enable_extruder();
@@ -542,7 +605,7 @@ static void mmu2_not_responding() {
             command(MMU_CMD_T0 + index);
             manage_response(true, true);
 
-            if (load_to_gears()) {
+            if (load_to_gears(index)) {
               mmu_loop();
               stepper.enable_extruder();
               extruder = index;
@@ -554,7 +617,7 @@ static void mmu2_not_responding() {
         } break;
 
         case 'c': {
-          while (!thermalManager.wait_for_hotend(active_extruder, false)) safe_delay(100);
+          while (!thermalManager.wait_for_hotend(active_extruder, false)) safe_delay(500);
           load_to_nozzle();
         } break;
       }
@@ -874,6 +937,8 @@ void MMU2::filament_runout() {
     mmu2s_triggered = present;
   }
 
+  //designed to check if fillament can pass heat coupling, so freaking use it like that!
+
   bool MMU2::can_load() {
     execute_extruder_sequence((const E_Step *)can_load_sequence, COUNT(can_load_sequence));
 
@@ -927,7 +992,7 @@ bool MMU2::load_filament_to_nozzle(const uint8_t index) {
   command(MMU_CMD_T0 + index);
   manage_response(true, true);
 
-  const bool success = load_to_gears();
+  const bool success = load_to_gears(index);
   if (success) {
     mmu_loop();
     extruder = index;
@@ -1009,6 +1074,17 @@ bool MMU2::unload() {
 
   // Unload sequence to optimize shape of the tip of the unloaded filament
   execute_extruder_sequence((const E_Step *)ramming_sequence, sizeof(ramming_sequence) / sizeof(E_Step));
+
+/*
+**
+**
+**Add smart check if fillament actually left extruder (in case of MMU2S), 
+** -> Retrytimes Retract more
+** -> Reram
+** -> Resttimes Retract More
+** -> Await user input
+**
+*/
 
   command(MMU_CMD_U0);
   manage_response(false, true);

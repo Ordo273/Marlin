@@ -56,6 +56,8 @@ public:
   static bool load_filament_to_nozzle(const uint8_t index);
   static bool eject_filament(const uint8_t index, const bool recover);
 
+  static int16_t version, buildnr;
+  
 private:
   static bool rx_str(FSTR_P fstr);
   static void tx_str(FSTR_P fstr);
@@ -80,7 +82,7 @@ private:
     static bool mmu2s_triggered;
     static void check_filament();
     static bool can_load();
-    static bool load_to_gears();
+    static bool load_to_gears(uint8_t);
   #else
     FORCE_INLINE static bool load_to_gears() { return true; }
   #endif
@@ -95,7 +97,6 @@ private:
   static int8_t state;
   static volatile int8_t finda;
   static volatile bool finda_runout_valid;
-  static int16_t version, buildnr;
   static millis_t prev_request, prev_P0_request;
   static char rx_buffer[MMU_RX_SIZE], tx_buffer[MMU_TX_SIZE];
 

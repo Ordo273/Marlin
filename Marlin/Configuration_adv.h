@@ -2060,7 +2060,7 @@
 #define LIN_ADVANCE
 #if ENABLED(LIN_ADVANCE)
   //#define EXTRA_LIN_ADVANCE_K // Enable for second linear advance constants
-  #define LIN_ADVANCE_K 0.255   // Unit: mm compression per 1mm/s extruder speed
+  #define LIN_ADVANCE_K 0.09   // Unit: mm compression per 1mm/s extruder speed
   //#define LA_DEBUG            // If enabled, this will generate debug information output over USB.
   #define EXPERIMENTAL_SCURVE // Enable this option to permit S-Curve Acceleration
   #define ALLOW_LOW_EJERK     // Allow a DEFAULT_EJERK value of <10. Recommended for direct drive hotends.
@@ -4190,8 +4190,8 @@
   // Use hardware reset for MMU if a pin is defined for it
   //#define MMU2_RST_PIN 23
 
-  // Enable if the MMU2 has 12V stepper motors (MMU2 Firmware 1.0.2 and up)
-  //#define MMU2_MODE_12V
+  // Enable if the MMU2 has 12V stepper motors (MMU2 Firmware 1.0.2 and up) Actually just stealth mode!
+  #define MMU2_MODE_12V
 
   // G-code to execute when MMU2 F.I.N.D.A. probe detects filament runout
   #define MMU2_FILAMENT_RUNOUT_SCRIPT "M600"
@@ -4230,6 +4230,8 @@
    */
   #if HAS_PRUSA_MMU2S
     #define MMU2_C0_RETRY   5             // Number of retries (total time = timeout*retries)
+    #define MMU2S_HAS_BLADE               // Undefine if your MMU selector does not contain a cutting blade
+    #define MMU2S_K0_RETRY  3             // Number of retries for complete loading with cutting Tip and trying again Set 0 to disable
 
     #define MMU2_CAN_LOAD_FEEDRATE 1000    // (mm/min)
     #define MMU2_CAN_LOAD_SEQUENCE \
