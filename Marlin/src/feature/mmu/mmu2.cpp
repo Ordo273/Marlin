@@ -54,7 +54,8 @@ MMU2 mmu2;
 #define MMU_CMD_TIMEOUT 45000UL // 45s timeout for mmu commands (except P0)
 #define MMU_P0_TIMEOUT 3000UL   // Timeout for P0 command: 3seconds
 
-#define MMU2_COMMAND(S) tx_str(F(S "\n"))
+#define MMU2_SEND(S) tx_str(F(S "\n"))
+#define MMU2_RECV(S) rx_str(F(S "\n"))
 
 #if ENABLED(MMU_EXTRUDER_SENSOR)
   uint8_t mmu_idl_sens = 0;
@@ -135,7 +136,7 @@ void MMU2::reset() {
     safe_delay(20);
     WRITE(MMU2_RST_PIN, HIGH);
   #else
-    MMU2_COMMAND("X0"); // Send soft reset
+    MMU2_SEND("X0");  // Send soft reset
   #endif
 }
 
@@ -161,11 +162,9 @@ void MMU2::mmu_loop() {
     case -1:
       if (rx_start()) {
         prev_P0_request = millis();   // Initialize finda sensor timeout
-
         DEBUG_ECHOLNPGM("MMU => 'start'");
         DEBUG_ECHOLNPGM("MMU <= 'S1'");
-
-        MMU2_COMMAND("S1");   // Read Version
+        MMU2_SEND("S1");    // Read Version
         state = -2;
       }
       else if (millis() > 30000) { // 30sec after reset disable MMU
@@ -177,10 +176,8 @@ void MMU2::mmu_loop() {
     case -2:
       if (rx_ok()) {
         sscanf(rx_buffer, "%huok\n", &version);
-
         DEBUG_ECHOLNPGM("MMU => ", version, "\nMMU <= 'S2'");
-
-        MMU2_COMMAND("S2");   // Read Build Number
+        MMU2_SEND("S2");    // Read Build Number
         state = -3;
       }
       break;
@@ -195,14 +192,12 @@ void MMU2::mmu_loop() {
 
         #if ENABLED(MMU2_MODE_12V)
           DEBUG_ECHOLNPGM("MMU <= 'M1'");
-
-          MMU2_COMMAND("M1");   // Stealth Mode
+          MMU2_SEND("M1");    // Stealth Mode
           state = -5;
 
         #else
           DEBUG_ECHOLNPGM("MMU <= 'P0'");
-
-          MMU2_COMMAND("P0");   // Read FINDA
+          MMU2_SEND("P0");    // Read FINDA
           state = -4;
         #endif
       }
@@ -213,10 +208,8 @@ void MMU2::mmu_loop() {
       // response to M1
       if (rx_ok()) {
         DEBUG_ECHOLNPGM("MMU => ok");
-
         DEBUG_ECHOLNPGM("MMU <= 'P0'");
-
-        MMU2_COMMAND("P0");   // Read FINDA
+        MMU2_SEND("P0");    // Read FINDA
         state = -4;
       }
       break;
@@ -254,14 +247,13 @@ void MMU2::mmu_loop() {
         else if (cmd == MMU_CMD_C0) {
           // continue loading
           DEBUG_ECHOLNPGM("MMU <= 'C0'");
-          MMU2_COMMAND("C0");
+          MMU2_SEND("C0");
           state = 3; // wait for response
         }
         else if (cmd == MMU_CMD_U0) {
           // unload current
           DEBUG_ECHOLNPGM("MMU <= 'U0'");
-
-          MMU2_COMMAND("U0");
+          MMU2_SEND("U0");
           state = 3; // wait for response
         }
         else if (WITHIN(cmd, MMU_CMD_E0, MMU_CMD_E0 + EXTRUDERS - 1)) {
@@ -274,7 +266,7 @@ void MMU2::mmu_loop() {
         else if (cmd == MMU_CMD_R0) {
           // recover after eject
           DEBUG_ECHOLNPGM("MMU <= 'R0'");
-          MMU2_COMMAND("R0");
+          MMU2_SEND("R0");
           state = 3; // wait for response
         }
         else if (WITHIN(cmd, MMU_CMD_F0, MMU_CMD_F0 + EXTRUDERS - 1)) {
@@ -304,7 +296,7 @@ void MMU2::mmu_loop() {
         cmd = MMU_CMD_NONE;
       }
       else if (ELAPSED(millis(), prev_P0_request + 300)) {
-        MMU2_COMMAND("P0"); // Read FINDA
+        MMU2_SEND("P0");  // Read FINDA
         state = 2; // wait for response
       }
 
@@ -333,7 +325,7 @@ void MMU2::mmu_loop() {
         if (mmu_idl_sens) {
           if (FILAMENT_PRESENT() && mmu_loading_flag) {
             DEBUG_ECHOLNPGM("MMU <= 'A'");
-            MMU2_COMMAND("A"); // send 'abort' request
+            MMU2_SEND("A");   // send 'abort' request
             mmu_idl_sens = 0;
             DEBUG_ECHOLNPGM("MMU IDLER_SENSOR = 0 - ABORT");
           }
@@ -347,6 +339,10 @@ void MMU2::mmu_loop() {
           if (keep_trying) {
             // MMU ok received but filament sensor not triggered, retrying...
             DEBUG_ECHOLNPGM("MMU => 'ok' (filament not present in gears)");
+            //#NEW
+            //DEBUG_ECHOLNPGM("MMU => 'ok' (no filament in gears)");
+            //DEBUG_ECHOLNPGM("MMU <= 'C0' (keep trying)");
+            //MMU2_SEND("C0");
           }
         #else
           constexpr bool keep_trying = false;
@@ -391,7 +387,7 @@ void MMU2::mmu_loop() {
  */
 bool MMU2::rx_start() {
   // check for start message
-  return rx_str(F("start\n"));
+  return MMU2_RECV("start");
 }
 
 /**
@@ -470,7 +466,7 @@ void MMU2::clear_rx_buffer() {
  * Check if we received 'ok' from MMU
  */
 bool MMU2::rx_ok() {
-  if (rx_str(F("ok\n"))) {
+  if (MMU2_RECV("ok")) {
     prev_P0_request = millis();
     return true;
   }
@@ -648,7 +644,7 @@ static void mmu2_not_responding() {
       command(MMU_CMD_T0 + index);
       manage_response(true, true);
       mmu_continue_loading();
-      command(MMU_CMD_C0);
+      //command(MMU_CMD_C0);
       extruder = index;
       active_extruder = 0;
 
@@ -716,13 +712,34 @@ static void mmu2_not_responding() {
   }
 
   void MMU2::mmu_continue_loading() {
+    // Try to load the filament a limited number of times
+    bool fil_present = 0;
     for (uint8_t i = 0; i < MMU_LOADING_ATTEMPTS_NR; i++) {
-      DEBUG_ECHOLNPGM("Additional load attempt #", i);
-      if (FILAMENT_PRESENT()) break;
+      DEBUG_ECHOLNPGM("Load attempt #", i + 1);
+
+      // Done as soon as filament is present
+      fil_present = FILAMENT_PRESENT();
+      if (fil_present) break;
+
+      // Attempt to load the filament, 1mm at a time, for 3s
       command(MMU_CMD_C0);
+      stepper.enable_extruder();
+      const millis_t expire_ms = millis() + 3000;
+      do {
+        current_position.e += 1;
+        line_to_current_position(MMU_LOAD_FEEDRATE);
+        planner.synchronize();
+        // When (T0 rx->ok) load is ready, but in fact it did not load
+        // successfully or an overload created pressure in the extruder.
+        // Send (C0) to load more and move E_AXIS a little to release pressure.
+        if ((fil_present = FILAMENT_PRESENT())) MMU2_SEND("A");
+      } while (!fil_present && PENDING(millis(), expire_ms));
+      stepper.disable_extruder();
       manage_response(true, true);
     }
-    if (!FILAMENT_PRESENT()) {
+
+    // Was the filament still missing in the last check?
+    if (!fil_present) {
       DEBUG_ECHOLNPGM("Filament never reached sensor, runout");
       filament_runout();
     }
@@ -745,7 +762,7 @@ static void mmu2_not_responding() {
       command(MMU_CMD_T0 + index);
       manage_response(true, true);
       command(MMU_CMD_C0);
-      extruder = index; //filament change is finished
+      extruder = index; // Filament change is finished
       active_extruder = 0;
       stepper.enable_extruder();
       SERIAL_ECHO_MSG(STR_ACTIVE_EXTRUDER, extruder);
@@ -924,7 +941,7 @@ void MMU2::filament_runout() {
     if (cmd == MMU_CMD_NONE && last_cmd == MMU_CMD_C0) {
       if (present && !mmu2s_triggered) {
         DEBUG_ECHOLNPGM("MMU <= 'A'");
-        tx_str(F("A\n"));
+        MMU2_SEND("A");
       }
       // Slowly spin the extruder during C0
       else {
@@ -1034,10 +1051,10 @@ bool MMU2::eject_filament(const uint8_t index, const bool recover) {
   manage_response(false, false);
 
   if (recover)  {
-    LCD_MESSAGE(MSG_MMU2_EJECT_RECOVER);
+    LCD_MESSAGE(MSG_MMU2_REMOVE_AND_CLICK);
     mmu2_attn_buzz();
-    TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_do(PROMPT_USER_CONTINUE, F("MMU2 Eject Recover"), FPSTR(CONTINUE_STR)));
-    TERN_(EXTENSIBLE_UI, ExtUI::onUserConfirmRequired(F("MMU2 Eject Recover")));
+    TERN_(HOST_PROMPT_SUPPORT, hostui.continue_prompt(GET_TEXT_F(MSG_MMU2_EJECT_RECOVER)));
+    TERN_(EXTENSIBLE_UI, ExtUI::onUserConfirmRequired(GET_TEXT_F(MSG_MMU2_EJECT_RECOVER)));
     TERN_(HAS_RESUME_CONTINUE, wait_for_user_response());
     mmu2_attn_buzz(true);
 

@@ -88,6 +88,7 @@ private:
   #endif
 
   #if ENABLED(MMU_EXTRUDER_SENSOR)
+    #define MMU_LOAD_FEEDRATE 19.02f // (mm/s)
     static void mmu_continue_loading();
   #endif
 
