@@ -70,10 +70,6 @@ MMU2 mmu2;
 #define MMU_CMD_E0   0x50  // up to supported filaments
 #define MMU_CMD_R0   0x60
 #define MMU_CMD_F0   0x70  // up to supported filaments
-#if defined(MMU2S_HAS_BLADE)
-#define MMU_CMD_K0   0x80  // up to supported filaments
-#endif
-#define MMU_CMD_W0   0x90   
 
 #define MMU_REQUIRED_FW_BUILDNR TERN(MMU2_MODE_12V, 132, 126)
 
@@ -276,21 +272,6 @@ void MMU2::mmu_loop() {
           tx_printf(F("F%d %d\n"), filament, cmd_arg);
           state = 3; // wait for response
         }
-#if defined(MMU2S_HAS_BLADE)
-        else if (WITHIN(cmd, MMU_CMD_K0, MMU_CMD_K0 + EXTRUDERS - 1)) {
-          // cut filament
-          const int filament = cmd - MMU_CMD_K0;
-          DEBUG_ECHOLNPGM("MMU <= K", filament, " ", cmd_arg);
-          tx_printf(F("K%d %d\n"), filament, cmd_arg);
-          state = 3; // wait for response
-        }
-#endif
-        else if (cmd == MMU_CMD_W0) {
-          // signal Load failure on MMU
-          DEBUG_ECHOLNPGM("MMU <= 'W0'");
-          MMU2_SEND("W0");
-          state = 4; // wait for response
-        }
 
         last_cmd = cmd;
         cmd = MMU_CMD_NONE;
@@ -338,11 +319,9 @@ void MMU2::mmu_loop() {
           const bool keep_trying = !mmu2s_triggered && last_cmd == MMU_CMD_C0;
           if (keep_trying) {
             // MMU ok received but filament sensor not triggered, retrying...
-            DEBUG_ECHOLNPGM("MMU => 'ok' (filament not present in gears)");
-            //#NEW
-            //DEBUG_ECHOLNPGM("MMU => 'ok' (no filament in gears)");
-            //DEBUG_ECHOLNPGM("MMU <= 'C0' (keep trying)");
-            //MMU2_SEND("C0");
+            DEBUG_ECHOLNPGM("MMU => 'ok' (no filament in gears)");
+            DEBUG_ECHOLNPGM("MMU <= 'C0' (keep trying)");
+            MMU2_SEND("C0");
           }
         #else
           constexpr bool keep_trying = false;
@@ -350,10 +329,10 @@ void MMU2::mmu_loop() {
 
         if (!keep_trying) {
           DEBUG_ECHOLNPGM("MMU => 'ok'");
+          ready = true;
+          state = 1;
+          last_cmd = MMU_CMD_NONE;
         }
-        ready = true;
-        state = 1;
-        last_cmd = MMU_CMD_NONE;
       }
       else if (ELAPSED(millis(), prev_request + MMU_CMD_TIMEOUT)) {
         // resend request after timeout
@@ -366,19 +345,6 @@ void MMU2::mmu_loop() {
       }
       TERN_(HAS_PRUSA_MMU2S, check_filament());
       break;
-	case 4:
-        if (rx_ok()) {
-          DEBUG_ECHOLNPGM("MMU => 'ok', resume print");
-          //mmu_attempt_nr = 0;
-          last_cmd = MMU_CMD_NONE;
-          ready = true;
-          state = 1;
-          resume_print();
-        }
-        if (cmd != MMU_CMD_NONE) {
-          state = 1;
-        }
-	    return;    
   }
 }
 
@@ -499,51 +465,17 @@ static void mmu2_not_responding() {
    * and give up after a number of attempts set with MMU2_C0_RETRY.
    * Each try has a timeout before returning a fail state.
    */
-  //bool MMU2::load_to_gears(const uint8_t index) {// MY CHange
-    bool MMU2::load_to_gears() { //original
-    //bool success = false; MINE
+  bool MMU2::load_to_gears() {
     command(MMU_CMD_C0);
     manage_response(true, true);
-/*MINE
-#if defined(MMU2S_HAS_BLADE)
-    LOOP_L_N(j,MMU2S_K0_RETRY) {
-      if(j>0) {
-        unload();
-        command(MMU_CMD_K0 + index);
-        manage_response(true, true);
-
-        command(MMU_CMD_T0 + index);
-        manage_response(true, true);
-        
-      }
-#endif
-      LOOP_L_N(i, MMU2_C0_RETRY) {  // Keep loading until filament reaches gears
-        if (mmu2s_triggered) break;
-        DEBUG_ECHO_MSG("keep trying retry #", i+1);
-        command(MMU_CMD_C0);
-        manage_response(true, true);
-        check_filament();
-      }
-      success = mmu2s_triggered && can_load();
-      if (success) break;
-#if defined(MMU2S_HAS_BLADE)
-    }
-#endif
-    if (!success) {
-      ui.set_status("Failed to load Fillament", true);
-      unload();
-      command(MMU_CMD_W0);
-      manage_response(true, true);
-      tool_change(index);
-END MINE*/
-//OG
     for (uint8_t i = 0; i < MMU2_C0_RETRY; ++i) {  // Keep loading until filament reaches gears
       if (mmu2s_triggered) break;
       command(MMU_CMD_C0);
       manage_response(true, true);
       check_filament();
-//END OG
     }
+    const bool success = mmu2s_triggered && can_load();
+    if (!success) mmu2_not_responding();
     return success;
   }
 
@@ -558,21 +490,13 @@ END MINE*/
 
     if (index != extruder) {
 
-/*
-**
-**
-**"Sanity" Check if IR sensor is triggered dumbass!!!!
-**
-**
-*/
-
       stepper.disable_extruder();
       ui.status_printf(0, GET_TEXT_F(MSG_MMU2_LOADING_FILAMENT), int(index + 1));
 
       command(MMU_CMD_T0 + index);
       manage_response(true, true);
 
-      if (load_to_gears(index)) {
+      if (load_to_gears()) {
         extruder = index; // filament change is finished
         active_extruder = 0;
         stepper.enable_extruder();
@@ -615,7 +539,7 @@ END MINE*/
             command(MMU_CMD_T0 + index);
             manage_response(true, true);
 
-            if (load_to_gears(index)) {
+            if (load_to_gears()) {
               mmu_loop();
               stepper.enable_extruder();
               extruder = index;
@@ -627,7 +551,7 @@ END MINE*/
         } break;
 
         case 'c': {
-          while (!thermalManager.wait_for_hotend(active_extruder, false)) safe_delay(500);
+          while (!thermalManager.wait_for_hotend(active_extruder, false)) safe_delay(100);
           load_to_nozzle();
         } break;
       }
@@ -966,24 +890,17 @@ void MMU2::filament_runout() {
     mmu2s_triggered = present;
   }
 
-  //designed to check if fillament can pass heat coupling, so freaking use it like that!
-
   bool MMU2::can_load() {
     execute_extruder_sequence((const E_Step *)can_load_sequence, COUNT(can_load_sequence));
 
     int filament_detected_count = 0;
     const int steps = (MMU2_CAN_LOAD_RETRACT) / (MMU2_CAN_LOAD_INCREMENT);
     DEBUG_ECHOLNPGM("MMU can_load:");
-    //LOOP_L_N(i, steps) { //MY OLD FUNCTION
-    for (uint8_t i = 0; i < steps; ++i) { //new Version
-      execute_extruder_sequence((const E_Step *)can_load_increment_sequence, COUNT(can_load_increment_sequence)); //new Version
-      check_filament(); // Don't trust the idle function
-      DEBUG_CHAR(mmu2s_triggered ? 'X' : 'O');
-      DEBUG_CHAR(' ');
-      DEBUG_CHAR('-');
-      DEBUG_CHAR(' ');
-      if (mmu2s_triggered) ++filament_detected_count;
+    for (uint8_t i = 0; i < steps; ++i) {
       execute_extruder_sequence((const E_Step *)can_load_increment_sequence, COUNT(can_load_increment_sequence));
+      check_filament(); // Don't trust the idle function
+      DEBUG_CHAR(mmu2s_triggered ? 'O' : 'o');
+      if (mmu2s_triggered) ++filament_detected_count;
     }
 
     if (filament_detected_count <= steps - (MMU2_CAN_LOAD_DEVIATION) / (MMU2_CAN_LOAD_INCREMENT)) {
@@ -1023,7 +940,7 @@ bool MMU2::load_filament_to_nozzle(const uint8_t index) {
   command(MMU_CMD_T0 + index);
   manage_response(true, true);
 
-  const bool success = load_to_gears(index);
+  const bool success = load_to_gears();
   if (success) {
     mmu_loop();
     extruder = index;
@@ -1105,17 +1022,6 @@ bool MMU2::unload() {
 
   // Unload sequence to optimize shape of the tip of the unloaded filament
   execute_extruder_sequence((const E_Step *)ramming_sequence, sizeof(ramming_sequence) / sizeof(E_Step));
-
-/*
-**
-**
-**Add smart check if fillament actually left extruder (in case of MMU2S), 
-** -> Retrytimes Retract more
-** -> Reram
-** -> Resttimes Retract More
-** -> Await user input
-**
-*/
 
   command(MMU_CMD_U0);
   manage_response(false, true);
