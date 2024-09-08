@@ -288,7 +288,7 @@ void MMU2::mmu_loop() {
         else if (cmd == MMU_CMD_W0) {
           // signal Load failure on MMU
           DEBUG_ECHOLNPGM("MMU <= 'W0'");
-          MMU2_COMMAND("W0");
+          MMU2_SEND("W0");
           state = 4; // wait for response
         }
 
