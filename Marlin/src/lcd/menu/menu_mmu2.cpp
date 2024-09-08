@@ -22,7 +22,7 @@
 
 #include "../../inc/MarlinConfig.h"
 
-#if BOTH(HAS_MARLINUI_MENU, MMU2_MENUS)
+#if ALL(HAS_MARLINUI_MENU, MMU2_MENUS)
 
 #include "../../MarlinCore.h"
 #include "../../feature/mmu/mmu2.h"
@@ -117,7 +117,7 @@ void menu_mmu2_information() {
 void menu_mmu2() {
   const bool busy = printingIsActive();
   START_MENU();
-  BACK_ITEM(MSG_MAIN);
+  BACK_ITEM(MSG_MAIN_MENU);
   SUBMENU(MSG_MMU2_LOAD_FILAMENT, menu_mmu2_load_filament);
   if (!busy) SUBMENU(MSG_MMU2_LOAD_TO_NOZZLE, menu_mmu2_load_to_nozzle);
   SUBMENU(MSG_MMU2_EJECT_FILAMENT, menu_mmu2_eject_filament);
