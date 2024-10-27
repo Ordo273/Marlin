@@ -701,9 +701,9 @@
     #define DEFAULT_Ki_LIST {   1.93,   1.93 }
     #define DEFAULT_Kd_LIST { 73.64, 73.64 }
   #else
-    #define DEFAULT_Kp 25.75
-    #define DEFAULT_Ki 2.38
-    #define DEFAULT_Kd 69.51
+    #define DEFAULT_Kp 21.11
+    #define DEFAULT_Ki 1.68
+    #define DEFAULT_Kd 66.29
     //#define DEFAULT_Kp  22.78
     //#define DEFAULT_Ki   1.89
     //#define DEFAULT_Kd  68.80
@@ -1531,7 +1531,7 @@
  *     |    [-]    |
  *     O-- FRONT --+
  */
-#define NOZZLE_TO_PROBE_OFFSET {-35.2,3.1,-2.05} //Z_old+Babystep = z_new
+#define NOZZLE_TO_PROBE_OFFSET {-35.2,3.1,-2.00} //Z_old+Babystep = z_new
 
 // Most probes should stay away from the edges of the bed, but
 // with NOZZLE_AS_PROBE this can be negative for a wider probing area.
@@ -1743,7 +1743,7 @@
 
 // The size of the print bed
 #define X_BED_SIZE 235
-#define Y_BED_SIZE 235
+#define Y_BED_SIZE 245
 
 // Travel limits (linear=mm, rotational=°) after homing, corresponding to endstop positions.
 #define X_MIN_POS 0
@@ -2080,7 +2080,7 @@
 #endif
 
 // Add a menu item to move between bed corners for manual bed adjustment
-#define LCD_BED_TRAMMING
+//#define LCD_BED_TRAMMING
 
 #if ENABLED(LCD_BED_TRAMMING)
   #define BED_TRAMMING_INSET_LFRB { 30, 30, 30, 30 } // (mm) Left, Front, Right, Back insets
