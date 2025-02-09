@@ -699,13 +699,13 @@
   #if ENABLED(PID_PARAMS_PER_HOTEND)
     // Specify between 1 and HOTENDS values per array.
     // If fewer than EXTRUDER values are provided, the last element will be repeated.
-    #define DEFAULT_Kp_LIST {  23.81,  23.81 }
-    #define DEFAULT_Ki_LIST {   1.93,   1.93 }
-    #define DEFAULT_Kd_LIST { 73.64, 73.64 }
+    #define DEFAULT_Kp_LIST {  20.56,  23.81 }
+    #define DEFAULT_Ki_LIST {   1.55,   1.93 }
+    #define DEFAULT_Kd_LIST {  68.26, 73.64 }
   #else
-    #define DEFAULT_Kp 21.11
-    #define DEFAULT_Ki 1.68
-    #define DEFAULT_Kd 66.29
+    #define DEFAULT_Kp 20.56
+    #define DEFAULT_Ki 1.55
+    #define DEFAULT_Kd 68.26
     //#define DEFAULT_Kp  22.78
     //#define DEFAULT_Ki   1.89
     //#define DEFAULT_Kd  68.80
@@ -1531,7 +1531,7 @@
  *     |    [-]    |
  *     O-- FRONT --+
  */
-#define NOZZLE_TO_PROBE_OFFSET {-35.2,3.1,-2.00} //Z_old+Babystep = z_new
+#define NOZZLE_TO_PROBE_OFFSET {-35.2,3.1,-1.15} //Z_old+Babystep = z_new
 
 // Most probes should stay away from the edges of the bed, but
 // with NOZZLE_AS_PROBE this can be negative for a wider probing area.
