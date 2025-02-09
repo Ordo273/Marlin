@@ -2173,19 +2173,21 @@
  * probe points will follow. This prevents any change from causing
  * the probe to be unable to reach any points.
  */
+
+constexpr float KH_dpo[] = NOZZLE_TO_PROBE_OFFSET;
 #if PROBE_SELECTED && !IS_KINEMATIC
-  #define PROBING_MARGIN_LEFT 42
-  //#define PROBING_MARGIN_RIGHT 50
-  #define PROBING_MARGIN_FRONT 40
-  #define PROBING_MARGIN_BACK 40
+  #define PROBING_MARGIN_LEFT   PROBING_MARGIN               +  0
+  #define PROBING_MARGIN_RIGHT  PROBING_MARGIN - KH_dpo[0]   +  0
+  #define PROBING_MARGIN_FRONT  PROBING_MARGIN + KH_dpo[1]   + 15
+  #define PROBING_MARGIN_BACK   PROBING_MARGIN               + 15
 #endif
 
 #if EITHER(MESH_BED_LEVELING, AUTO_BED_LEVELING_UBL)
-  // Override the mesh area if the automatic (max) area is too large
-  //#define MESH_MIN_X MESH_INSET
-  //#define MESH_MIN_Y MESH_INSET
-  //#define MESH_MAX_X X_BED_SIZE - (MESH_INSET)
-  //#define MESH_MAX_Y Y_BED_SIZE - (MESH_INSET)
+  // Override the mesh area if the automatic (max) area is too large; Though movement is still contrained by bed size (nozzle can't go outside)
+  #define MESH_MIN_X MESH_INSET                              +  0
+  #define MESH_MIN_Y MESH_INSET                + KH_dpo[1]   + 15
+  #define MESH_MAX_X X_BED_SIZE - (MESH_INSET) + KH_dpo[0]   +  0
+  #define MESH_MAX_Y Y_BED_SIZE - (MESH_INSET)               - 15
 #endif
 
 #if BOTH(AUTO_BED_LEVELING_UBL, EEPROM_SETTINGS)
